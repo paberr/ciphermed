@@ -1,3 +1,23 @@
+/*
+ * Copyright 2013-2015 Raphael Bost
+ * Copyright 2016-2017 Pascal Berrang
+ *
+ * This file is part of ciphermed-forests.
+
+ *  ciphermed-forests is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ * 
+ *  ciphermed-forests is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ * 
+ *  You should have received a copy of the GNU General Public License
+ *  along with ciphermed-forests.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ */
 #include <net/exec_protocol.hh>
 
 #include <protobuf/protobuf_conversion.hh>
@@ -621,7 +641,7 @@ void exec_tree_enc_argmax(tcp::socket &socket, Tree_EncArgmax_Helper &helper, fu
 
 Ctxt exec_change_encryption_scheme_slots(tcp::socket &socket, const vector<mpz_class> &c_gm, GM &gm, const FHEPubKey& publicKey, const EncryptedArray &ea, gmp_randstate_t randstate)
 {
-    Change_ES_FHE_to_GM_slots_A switcher;
+    Change_ES_FHE_from_GM_slots_A switcher;
     vector<mpz_class> c_gm_blinded = switcher.blind(c_gm,gm,randstate, ea.size());
     
     send_int_array_to_socket(socket, c_gm_blinded);
@@ -637,9 +657,51 @@ Ctxt exec_change_encryption_scheme_slots(tcp::socket &socket, const vector<mpz_c
 void exec_change_encryption_scheme_slots_helper(tcp::socket &socket, GM_priv &gm, const FHEPubKey &publicKey, const EncryptedArray &ea)
 {
     vector<mpz_class> c_gm_blinded = read_int_array_from_socket(socket);
-    Ctxt c_blinded_fhe = Change_ES_FHE_to_GM_slots_B::decrypt_encrypt(c_gm_blinded,gm,publicKey,ea);
+    Ctxt c_blinded_fhe = Change_ES_FHE_from_GM_slots_B::decrypt_encrypt(c_gm_blinded,gm,publicKey,ea);
     
     send_fhe_ctxt_to_socket(socket, c_blinded_fhe);
+}
+
+vector<mpz_class> exec_change_encryption_scheme_back_slots(tcp::socket &socket, const Ctxt &c_fhe, GM &gm, const FHEPubKey& publicKey, const EncryptedArray &ea, gmp_randstate_t randstate)
+{
+    Change_GM_from_ES_FHE_slots_A switcher;
+    Ctxt c_fhe_blinded = switcher.blind(c_fhe, publicKey, ea, randstate, ea.size());
+
+    send_fhe_ctxt_to_socket(socket, c_fhe_blinded);
+
+    vector<mpz_class> c_blinded_gm = read_int_array_from_socket(socket);
+    vector<mpz_class> c_gm = switcher.unblind(c_blinded_gm, gm);
+
+    return c_gm;
+}
+
+void exec_change_encryption_scheme_back_slots_helper(tcp::socket &socket, GM &gm, const FHESecKey &privateKey, const EncryptedArray &ea)
+{
+    Ctxt c_fhe_blinded = read_fhe_ctxt_from_socket(socket, privateKey);
+    vector<mpz_class> c_blinded_gm = Change_GM_from_ES_FHE_slots_B::decrypt_encrypt(c_fhe_blinded,gm,privateKey,ea);
+
+    send_int_array_to_socket(socket, c_blinded_gm);
+}
+
+vector<mpz_class> exec_change_encryption_scheme_paillier_slots(tcp::socket &socket, const vector<mpz_class> &c_gm, GM &gm, Paillier& publicKey, gmp_randstate_t randstate)
+{
+    Change_Paillier_from_GM_slots_A switcher;
+    vector<mpz_class> c_gm_blinded = switcher.blind(c_gm, gm, randstate, c_gm.size());
+
+    send_int_array_to_socket(socket, c_gm_blinded);
+
+    vector<mpz_class> c_blinded_paillier = read_int_array_from_socket(socket);
+    vector<mpz_class> c_paillier = switcher.unblind(c_blinded_paillier, publicKey);
+
+    return c_paillier;
+}
+
+void exec_change_encryption_scheme_paillier_slots_helper(tcp::socket &socket, GM_priv &gm, Paillier &publicKey)
+{
+    vector<mpz_class> c_gm_blinded = read_int_array_from_socket(socket);
+    vector<mpz_class> c_blinded_paillier = Change_Paillier_from_GM_slots_B::decrypt_encrypt(c_gm_blinded,gm,publicKey);
+
+    send_int_array_to_socket(socket, c_blinded_paillier);
 }
 
 mpz_class exec_compute_dot_product(tcp::socket &socket, const vector<mpz_class> &x, Paillier &p)
@@ -673,4 +735,49 @@ void exec_help_compute_dot_product(tcp::socket &socket, const vector<mpz_class> 
     }
     
     send_int_array_to_socket(socket, c_y);
+}
+
+vector<mpz_class> exec_change_encryption_scheme_fhe_paillier_slots(tcp::socket &socket, const Ctxt &c_fhe, Paillier &p,
+                                                                   const FHEPubKey &publicKey, const EncryptedArray &ea,
+                                                                   gmp_randstate_t randstate) {
+    Change_Paillier_from_ES_FHE_slots_A switcher;
+    Ctxt c_fhe_blinded = switcher.blind(c_fhe, publicKey, ea, randstate, ea.size());
+
+    send_fhe_ctxt_to_socket(socket, c_fhe_blinded);
+
+    vector<mpz_class> c_blinded_paillier = read_int_array_from_socket(socket);
+    vector<mpz_class> c_paillier = switcher.unblind(c_blinded_paillier, p);
+
+    return c_paillier;
+}
+
+void
+exec_change_encryption_scheme_fhe_paillier_slots_helper(tcp::socket &socket, Paillier &p, const FHESecKey &privateKey,
+                                                        const EncryptedArray &ea) {
+    Ctxt c_fhe_blinded = read_fhe_ctxt_from_socket(socket, privateKey);
+    vector<mpz_class> c_blinded_paillier = Change_Paillier_from_ES_FHE_slots_B::decrypt_encrypt(c_fhe_blinded, p, privateKey, ea);
+
+    send_int_array_to_socket(socket, c_blinded_paillier);
+}
+
+void exec_move_paillier_encryption(tcp::socket &socket, const vector<mpz_class> &c_p, Paillier &own, Paillier &other,
+                                   gmp_randstate_t randstate) {
+    Move_Paillier_A switcher;
+    vector<mpz_class> c_blinded_paillier = switcher.blind(c_p, other, randstate);
+
+    send_int_array_to_socket(socket, c_blinded_paillier);
+
+    vector<mpz_class> c_noise = switcher.enc_noise(own);
+
+    send_int_array_to_socket(socket, c_noise);
+}
+
+vector<mpz_class> exec_move_paillier_encryption_helper(tcp::socket &socket, Paillier_priv &own, Paillier &other) {
+    Move_Paillier_B switcher;
+
+    vector<mpz_class> c_blinded_paillier = read_int_array_from_socket(socket);
+    vector<mpz_class> c_blinded_paillier_other = switcher.decrypt_encrypt(c_blinded_paillier, own, other);
+
+    vector<mpz_class> c_noise = read_int_array_from_socket(socket);
+    return switcher.unblind(c_blinded_paillier_other, c_noise, other);
 }

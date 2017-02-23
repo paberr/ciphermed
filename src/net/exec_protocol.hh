@@ -1,3 +1,23 @@
+/*
+ * Copyright 2013-2015 Raphael Bost
+ * Copyright 2016-2017 Pascal Berrang
+ *
+ * This file is part of ciphermed-forests.
+
+ *  ciphermed-forests is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ * 
+ *  ciphermed-forests is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ * 
+ *  You should have received a copy of the GNU General Public License
+ *  along with ciphermed-forests.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ */
 #pragma once
 
 #include <gmpxx.h>
@@ -57,5 +77,17 @@ void exec_tree_enc_argmax(tcp::socket &socket, Tree_EncArgmax_Helper &helper, fu
 Ctxt exec_change_encryption_scheme_slots(tcp::socket &socket, const vector<mpz_class> &c_gm, GM &gm, const FHEPubKey& publicKey, const EncryptedArray &ea, gmp_randstate_t randstate);
 void exec_change_encryption_scheme_slots_helper(tcp::socket &socket, GM_priv &gm, const FHEPubKey &publicKey, const EncryptedArray &ea);
 
+vector<mpz_class> exec_change_encryption_scheme_back_slots(tcp::socket &socket, const Ctxt &c_fhe, GM &gm, const FHEPubKey& publicKey, const EncryptedArray &ea, gmp_randstate_t randstate);
+void exec_change_encryption_scheme_back_slots_helper(tcp::socket &socket, GM &gm, const FHESecKey &privateKey, const EncryptedArray &ea);
+
+vector<mpz_class> exec_change_encryption_scheme_paillier_slots(tcp::socket &socket, const vector<mpz_class> &c_gm, GM &gm, Paillier& publicKey, gmp_randstate_t randstate);
+void exec_change_encryption_scheme_paillier_slots_helper(tcp::socket &socket, GM_priv &gm, Paillier &publicKey);
+
+vector<mpz_class> exec_change_encryption_scheme_fhe_paillier_slots(tcp::socket &socket, const Ctxt &c_fhe, Paillier &p, const FHEPubKey& publicKey, const EncryptedArray &ea, gmp_randstate_t randstate);
+void exec_change_encryption_scheme_fhe_paillier_slots_helper(tcp::socket &socket, Paillier &p, const FHESecKey &privateKey, const EncryptedArray &ea);
+
 mpz_class exec_compute_dot_product(tcp::socket &socket, const vector<mpz_class> &x, Paillier &p);
 void exec_help_compute_dot_product(tcp::socket &socket, const vector<mpz_class> &y, Paillier_priv &pp, bool encrypted_input);
+
+void exec_move_paillier_encryption(tcp::socket &socket, const vector<mpz_class> &c_p, Paillier &own, Paillier &other, gmp_randstate_t randstate);
+vector<mpz_class> exec_move_paillier_encryption_helper(tcp::socket &socket, Paillier_priv &own, Paillier &other);
