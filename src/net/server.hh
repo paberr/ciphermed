@@ -1,3 +1,23 @@
+/*
+ * Copyright 2013-2015 Raphael Bost
+ * Copyright 2016-2017 Pascal Berrang
+ *
+ * This file is part of ciphermed-forests.
+
+ *  ciphermed-forests is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ * 
+ *  ciphermed-forests is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ * 
+ *  You should have received a copy of the GNU General Public License
+ *  along with ciphermed-forests.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ */
 #pragma once
 
 #include <gmpxx.h>
@@ -12,6 +32,7 @@
 #include <crypto/gm.hh>
 
 #include <net/key_deps_descriptor.hh>
+#include <net/defs.hh>
 
 using boost::asio::ip::tcp;
 
@@ -25,7 +46,7 @@ public:
     virtual ~Server();
     
     virtual Server_session* create_new_server_session(tcp::socket &socket) = 0;
-    void run();
+    void run(const unsigned int port=PORT);
     
     /* Keys management */
 
@@ -66,6 +87,7 @@ protected:
     gmp_randstate_t rand_state_;
     unsigned int n_clients_;
     unsigned int threads_per_session_;
+    unsigned int port_;
     
     /* statistical security */
     unsigned int lambda_;
@@ -121,10 +143,24 @@ public:
     
     Ctxt change_encryption_scheme(const vector<mpz_class> &c_gm);
     void run_change_encryption_scheme_slots_helper();
+
+    vector<mpz_class> change_encryption_scheme_back(const Ctxt &c_fhe);
+    void run_change_encryption_scheme_back_slots_helper();
+
+    vector<mpz_class> change_encryption_scheme_gm_paillier(const vector<mpz_class> &c_gm);
+    void run_change_encryption_scheme_gm_paillier_slots_helper();
+
+    vector<mpz_class> change_encryption_scheme_fhe_paillier(const Ctxt &c_fhe);
+    void run_change_encryption_scheme_fhe_paillier_slots_helper();
+
+    void move_paillier_to_client(vector<mpz_class> c_p);
+    vector<mpz_class> move_paillier_from_client();
     
     mpz_class compute_dot_product(const vector<mpz_class> &x);
     void help_compute_dot_product(const vector<mpz_class> &y, bool encrypted_input = false);
-    
+
+    vector<mpz_class> add_columns(const vector<vector<mpz_class> > &c_p, size_t n_slots);
+
     /* calls to the comparison owner and helper objects */
     
     bool run_enc_comparison_owner(EncCompare_Owner &owner);
@@ -139,6 +175,7 @@ public:
 
     void run_linear_enc_argmax(Linear_EncArgmax_Helper &helper, COMPARISON_PROTOCOL comparison_prot);
     void run_tree_enc_argmax(Tree_EncArgmax_Helper &helper, COMPARISON_PROTOCOL comparison_prot);
+    size_t run_tree_enc_argmax(Tree_EncArgmax_Owner &owner, COMPARISON_PROTOCOL comparison_prot);
     
     /* to build comparators */
     EncCompare_Owner create_enc_comparator_owner(size_t bit_size, COMPARISON_PROTOCOL comparison_prot);

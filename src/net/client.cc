@@ -1,3 +1,23 @@
+/*
+ * Copyright 2013-2015 Raphael Bost
+ * Copyright 2016-2017 Pascal Berrang
+ *
+ * This file is part of ciphermed-forests.
+
+ *  ciphermed-forests is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ * 
+ *  ciphermed-forests is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ * 
+ *  You should have received a copy of the GNU General Public License
+ *  along with ciphermed-forests.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ */
 #include <iostream>
 #include <string>
 #include <boost/asio.hpp>
@@ -54,10 +74,11 @@ Client::~Client()
 }
 
 
-void Client::connect(boost::asio::io_service& io_service, const string& hostname)
+void Client::connect(boost::asio::io_service& io_service, const string& hostname, const unsigned int port)
 {
+    port_ = port;
     tcp::resolver resolver(io_service);
-    tcp::resolver::query query(hostname, to_string( PORT ));
+    tcp::resolver::query query(hostname, to_string(port));
     tcp::resolver::iterator endpoint_iterator = resolver.resolve(query);
     boost::asio::connect(socket_, endpoint_iterator);
 }
@@ -523,6 +544,20 @@ void Client::run_change_encryption_scheme_slots_helper()
 }
 
 
+vector<mpz_class> Client::change_encryption_scheme_back(const Ctxt &c_fhe)
+{
+    EncryptedArray ea(*fhe_context_, fhe_G_);
+
+    return exec_change_encryption_scheme_back_slots(socket_, c_fhe, *server_gm_ ,*server_fhe_pk_, ea, rand_state_);
+}
+
+void Client::run_change_encryption_scheme_back_slots_helper()
+{
+    EncryptedArray ea(*fhe_context_, fhe_G_);
+    exec_change_encryption_scheme_back_slots_helper(socket_, *gm_, *fhe_sk_, ea);
+}
+
+
 mpz_class Client::compute_dot_product(const vector<mpz_class> &x)
 {
     return exec_compute_dot_product(socket_, x, *server_paillier_);
@@ -605,4 +640,44 @@ Rev_EncCompare_Helper Client::create_rev_enc_comparator_helper(size_t bit_size, 
     }
     
     return Rev_EncCompare_Helper(bit_size,*paillier_,comparator);
+}
+
+vector<mpz_class> Client::change_encryption_scheme_gm_paillier(const vector<mpz_class> &c_gm) {
+    return exec_change_encryption_scheme_paillier_slots(socket_, c_gm, *server_gm_, *server_paillier_, rand_state_);
+}
+
+void Client::run_change_encryption_scheme_gm_paillier_slots_helper() {
+    exec_change_encryption_scheme_paillier_slots_helper(socket_, *gm_, *paillier_);
+}
+
+vector<mpz_class> Client::change_encryption_scheme_fhe_paillier(const Ctxt &c_fhe) {
+    EncryptedArray ea(*fhe_context_, fhe_G_);
+    return exec_change_encryption_scheme_fhe_paillier_slots(socket_, c_fhe, *server_paillier_ ,*server_fhe_pk_, ea, rand_state_);
+}
+
+void Client::run_change_encryption_scheme_fhe_paillier_slots_helper() {
+    EncryptedArray ea(*fhe_context_, fhe_G_);
+    exec_change_encryption_scheme_fhe_paillier_slots_helper(socket_, *paillier_, *fhe_sk_, ea);
+}
+
+void Client::run_tree_enc_argmax(Tree_EncArgmax_Helper &helper, COMPARISON_PROTOCOL comparison_prot) {
+    size_t nbits = helper.bit_length();
+    function<Comparison_protocol_B*()> comparator_creator;
+
+    if (comparison_prot == LSIC_PROTOCOL) {
+        comparator_creator = [this,nbits](){ return new LSIC_B(0,nbits,*gm_); };
+    }else if (comparison_prot == DGK_PROTOCOL){
+        comparator_creator = [this,nbits](){ return new Compare_B(0,nbits,*paillier_,*gm_); };
+    }else if (comparison_prot == GC_PROTOCOL) {
+        comparator_creator = [this,nbits](){ return new GC_Compare_B(0,nbits,*gm_, rand_state_); };
+    }
+    exec_tree_enc_argmax(socket_, helper, comparator_creator, n_threads_);
+}
+
+void Client::move_paillier_to_server(vector<mpz_class> c_p) {
+    exec_move_paillier_encryption(socket_, c_p, *paillier_, *server_paillier_, rand_state_);
+}
+
+vector<mpz_class> Client::move_paillier_from_server() {
+    return exec_move_paillier_encryption_helper(socket_, *paillier_, *server_paillier_);
 }

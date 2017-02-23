@@ -1,3 +1,23 @@
+/*
+ * Copyright 2013-2015 Raphael Bost
+ * Copyright 2016-2017 Pascal Berrang
+ *
+ * This file is part of ciphermed-forests.
+
+ *  ciphermed-forests is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ * 
+ *  ciphermed-forests is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ * 
+ *  You should have received a copy of the GNU General Public License
+ *  along with ciphermed-forests.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ */
 #include <iostream>
 #include <string>
 #include <vector>
@@ -110,13 +130,14 @@ void Server::init_FHE_key()
     fhe_sk_->GenSecKey(FHE_w); // A Hamming-weight-w secret key
 }
 
-void Server::run()
+void Server::run(const unsigned int port)
 {
+    port_ = port;
     try
     {
         boost::asio::io_service io_service;
         
-        tcp::endpoint endpoint(tcp::v4(), PORT);
+        tcp::endpoint endpoint(tcp::v4(), port);
         tcp::acceptor acceptor(io_service, endpoint);
         
         for (;;)
@@ -126,7 +147,7 @@ void Server::run()
             
             Server_session *c = create_new_server_session(socket);
             
-            cout << "Start new connexion: " << c->id() << endl;
+            cout << "Start new connection: " << c->id() << endl;
             thread t (&Server_session::run_session,c);
             t.detach();
         }
@@ -542,6 +563,19 @@ void Server_session::run_change_encryption_scheme_slots_helper()
     exec_change_encryption_scheme_slots_helper(socket_, server_->gm(), server_->fhe_sk(), ea);
 }
 
+vector<mpz_class> Server_session::change_encryption_scheme_back(const Ctxt &c_fhe)
+{
+    EncryptedArray ea(server_->fhe_context(), server_->fhe_G());
+    return exec_change_encryption_scheme_back_slots(socket_, c_fhe, *client_gm_ ,*client_fhe_pk_, ea, rand_state_);
+}
+
+
+void Server_session::run_change_encryption_scheme_back_slots_helper()
+{
+    EncryptedArray ea(server_->fhe_context(), server_->fhe_G());
+    exec_change_encryption_scheme_back_slots_helper(socket_, server_->gm(), server_->fhe_sk(), ea);
+}
+
 
 mpz_class Server_session::compute_dot_product(const vector<mpz_class> &x)
 {
@@ -613,4 +647,65 @@ Rev_EncCompare_Helper Server_session::create_rev_enc_comparator_helper(size_t bi
     }
 
     return Rev_EncCompare_Helper(bit_size,server_->paillier(),comparator);
+}
+
+vector<mpz_class> Server_session::change_encryption_scheme_gm_paillier(const vector<mpz_class> &c_gm) {
+    return exec_change_encryption_scheme_paillier_slots(socket_, c_gm, *client_gm_, *client_paillier_, rand_state_);
+}
+
+void Server_session::run_change_encryption_scheme_gm_paillier_slots_helper() {
+    exec_change_encryption_scheme_paillier_slots_helper(socket_, server_->gm(), server_->paillier());
+}
+
+vector<mpz_class> Server_session::change_encryption_scheme_fhe_paillier(const Ctxt &c_fhe) {
+    EncryptedArray ea(server_->fhe_context(), server_->fhe_G());
+    return exec_change_encryption_scheme_fhe_paillier_slots(socket_, c_fhe, *client_paillier_ ,*client_fhe_pk_, ea, rand_state_);
+}
+
+void Server_session::run_change_encryption_scheme_fhe_paillier_slots_helper() {
+    EncryptedArray ea(server_->fhe_context(), server_->fhe_G());
+    exec_change_encryption_scheme_fhe_paillier_slots_helper(socket_, server_->paillier(), server_->fhe_sk(), ea);
+}
+
+vector<mpz_class> Server_session::add_columns(const vector<vector<mpz_class> > &c_p, size_t n_slots) {
+    vector<mpz_class> c_p_counts(n_slots);
+    for(size_t i = 0; i < n_slots; ++i) {
+        for(size_t tj = 0; tj < c_p.size(); ++tj) {
+            if (tj == 0) {
+                // first round
+                c_p_counts[i] = c_p[tj][i];
+            } else {
+                c_p_counts[i] = client_paillier_->add(c_p_counts[i], c_p[tj][i]);
+            }
+        }
+    }
+    return c_p_counts;
+}
+
+size_t Server_session::run_tree_enc_argmax(Tree_EncArgmax_Owner &owner, COMPARISON_PROTOCOL comparison_prot) {
+    assert(client_paillier_ != NULL);
+    assert(client_gm_ != NULL);
+
+    size_t nbits = owner.bit_length();
+    function<Comparison_protocol_A*()> comparator_creator;
+
+    if (comparison_prot == LSIC_PROTOCOL) {
+        comparator_creator = [this,nbits](){ return new LSIC_A(0,nbits,*client_gm_); };
+    }else if (comparison_prot == DGK_PROTOCOL){
+        comparator_creator = [this,nbits](){ return new Compare_A(0,nbits,*client_paillier_,*client_gm_,rand_state_); };
+    }else if (comparison_prot == GC_PROTOCOL) {
+        comparator_creator = [this,nbits](){ return new GC_Compare_A(0,nbits,*client_gm_, rand_state_); };
+    }
+
+    exec_tree_enc_argmax(socket_,owner, comparator_creator, 100, server_->threads_per_session());
+
+    return owner.output();
+}
+
+void Server_session::move_paillier_to_client(vector<mpz_class> c_p) {
+    exec_move_paillier_encryption(socket_, c_p, server_->paillier(), *client_paillier_, rand_state_);
+}
+
+vector<mpz_class> Server_session::move_paillier_from_client() {
+    return exec_move_paillier_encryption_helper(socket_, server_->paillier(), *client_paillier_);
 }
