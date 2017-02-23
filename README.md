@@ -2,7 +2,7 @@
 Implementation of "Identifying Personal DNA Methylation Profiles by Genotype Inference" by Michael Backes, Pascal Berrang, Matthias Bieg, Roland Eils, Carl Herrmann, Mathias Humbert, Irina Lehmann
 
 This code provides the means to privately evaluate a random forest classifier over the network.
-Our implementation is based on "Machine Learning Classification over Encrypted Data" by Raphael Bost, Raluca Ada Popa, Stephen Tu and Shafi Goldwasser ([source code](https://github.com/rbost/Ciphermed-Forests)).
+Our implementation builds on "Machine Learning Classification over Encrypted Data" by Raphael Bost, Raluca Ada Popa, Stephen Tu and Shafi Goldwasser ([source code](https://github.com/rbost/ciphermed)).
  
 It is available under the General Public License (GPL) version 3.
  
