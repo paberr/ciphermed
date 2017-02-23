@@ -1,3 +1,23 @@
+/*
+ * Copyright 2013-2015 Raphael Bost
+ * Copyright 2016-2017 Pascal Berrang
+ *
+ * This file is part of ciphermed-forests.
+
+ *  ciphermed-forests is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ * 
+ *  ciphermed-forests is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ * 
+ *  You should have received a copy of the GNU General Public License
+ *  along with ciphermed-forests.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ */
 #include <mpc/lsic.hh>
 #include <mpc/private_comparison.hh>
 #include <mpc/enc_comparison.hh>
@@ -214,8 +234,8 @@ void Tester_Client::test_fhe()
         bits[i] = gmp_urandomb_ui(rand_state_,1);
     }
     
-    PlaintextArray p0(ea);
-    p0.encode(bits);
+    NewPlaintextArray p0(ea);
+    encode(ea, p0, bits);
     p0.print(cout);
     
     Ctxt c0(*server_fhe_pk_);
@@ -434,7 +454,7 @@ void Tester_Server_session::test_change_es()
     Ctxt c = read_fhe_ctxt_from_socket(socket_, server_->fhe_sk());
     
     EncryptedArray ea(server_->fhe_sk().getContext(), server_->fhe_G());
-    PlaintextArray pp0(ea);
+    NewPlaintextArray pp0(ea);
     ea.decrypt(c, server_->fhe_sk(), pp0);
     cout << id_ << ": Decryption result = " << endl;
     pp0.print(cout);
@@ -453,7 +473,7 @@ void Tester_Server_session::decrypt_fhe()
     Ctxt c = convert_from_message(m, server_->fhe_sk());
     
     EncryptedArray ea(server_->fhe_sk().getContext(), server_->fhe_G());
-    PlaintextArray pp0(ea);
+    NewPlaintextArray pp0(ea);
     ea.decrypt(c, server_->fhe_sk(), pp0);
     cout << id_ << ": Decryption result = " << endl;
     pp0.print(cout);
