@@ -26,7 +26,7 @@
 
 
 
-class BenchTimer : public ResumableTimer {
+class BenchTimer : public FullBenchTimer {
 public:
     static BenchTimer* shared_instance__;
 
@@ -45,7 +45,7 @@ public:
     }
     
 protected:
-    BenchTimer(const std::string &m) : ResumableTimer(m) {};
+    BenchTimer(const std::string &m) : FullBenchTimer(m) {};
     
 };
 
@@ -85,7 +85,9 @@ public:
 #define BENCHMARK_INIT BenchTimer::create();
 #define PAUSE_BENCHMARK BenchTimer::shared_BenchTimer()->pause();
 #define RESUME_BENCHMARK BenchTimer::shared_BenchTimer()->resume();
-#define GET_BENCHMARK_TIME BenchTimer::shared_BenchTimer()->get_elapsed_time()
+#define GET_BENCHMARK_TIME BenchTimer::shared_BenchTimer()->get_elapsed_comp_time()
+#define GET_BENCHMARK_COMP_TIME BenchTimer::shared_BenchTimer()->get_elapsed_comp_time()
+#define GET_BENCHMARK_NET_TIME BenchTimer::shared_BenchTimer()->get_elapsed_net_time()
 #define RESET_BENCHMARK_TIMER BenchTimer::shared_BenchTimer()->restart();
 
 #define RESET_BYTE_COUNT IOBenchmark::reset();
@@ -96,6 +98,8 @@ public:
 #define PAUSE_BENCHMARK
 #define RESUME_BENCHMARK
 #define GET_BENCHMARK_TIME 0
+#define GET_BENCHMARK_COMP_TIME 0
+#define GET_BENCHMARK_NET_TIME 0
 #define RESET_BENCHMARK_TIMER
 #define RESET_BYTE_COUNT
 #define EXCHANGED_BYTES(n)

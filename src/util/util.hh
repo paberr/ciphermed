@@ -129,3 +129,66 @@ private:
 
     Timer t_;
 };
+
+class FullBenchTimer {
+public:
+    FullBenchTimer(const std::string &m) : m_(m), comp_time_ms_(0), net_time_ms_(0), is_running_(true), t_() {}
+    FullBenchTimer(const ResumableTimer&) = delete;
+    FullBenchTimer(ResumableTimer &&) = delete;
+    FullBenchTimer &operator=(const ResumableTimer &) = delete;
+
+    void restart()
+    {
+        comp_time_ms_ = 0.;
+        net_time_ms_ = 0.;
+        is_running_ = true;
+        t_.lap();
+    }
+
+    void pause()
+    {
+        comp_time_ms_ += t_.lap_ms();
+        is_running_ = false;
+    }
+
+    void resume()
+    {
+        net_time_ms_ += t_.lap_ms();
+        is_running_ = true;
+    }
+
+    double get_elapsed_comp_time()
+    {
+        if (is_running_) {
+            return comp_time_ms_+t_.lap_ms();
+        }
+        return comp_time_ms_;
+    }
+
+    double get_elapsed_net_time()
+    {
+        if (!is_running_) {
+            return net_time_ms_+t_.lap_ms();
+        }
+        return net_time_ms_;
+    }
+
+    ~FullBenchTimer()
+    {
+        if (is_running_) {
+            comp_time_ms_ += t_.lap_ms();
+        } else {
+            net_time_ms_ += t_.lap_ms();
+        }
+
+        std::cerr << "region " << m_ << " took " << comp_time_ms_ << " ms (computation), " << net_time_ms_ << " ms (network)" << std::endl;
+    }
+
+private:
+    std::string m_;
+    double comp_time_ms_;
+    double net_time_ms_;
+    bool is_running_;
+
+    Timer t_;
+};
