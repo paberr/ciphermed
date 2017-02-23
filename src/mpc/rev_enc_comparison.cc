@@ -1,20 +1,21 @@
 /*
  * Copyright 2013-2015 Raphael Bost
+ * Copyright 2016-2017 Pascal Berrang
  *
- * This file is part of ciphermed.
+ * This file is part of ciphermed-forests.
 
- *  ciphermed is free software: you can redistribute it and/or modify
+ *  ciphermed-forests is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
  * 
- *  ciphermed is distributed in the hope that it will be useful,
+ *  ciphermed-forests is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
  * 
  *  You should have received a copy of the GNU General Public License
- *  along with ciphermed.  If not, see <http://www.gnu.org/licenses/>. 2
+ *  along with ciphermed-forests.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
 
@@ -36,7 +37,10 @@ Rev_EncCompare_Owner::Rev_EncCompare_Owner(const mpz_class &v_a, const mpz_class
 
 Rev_EncCompare_Owner::~Rev_EncCompare_Owner()
 {
-    delete comparator_;
+    if(comparator_ != NULL) {
+        delete comparator_;
+        comparator_ = NULL;
+    }
 }
 
 void Rev_EncCompare_Owner::set_input(const mpz_class &v_a, const mpz_class &v_b)
@@ -92,7 +96,10 @@ Rev_EncCompare_Helper::Rev_EncCompare_Helper(const size_t &l, Paillier_priv_fast
 
 Rev_EncCompare_Helper::~Rev_EncCompare_Helper()
 {
-    delete comparator_;
+    if(comparator_ != NULL) {
+        delete comparator_;
+        comparator_ = NULL;
+    }
 }
 
 void Rev_EncCompare_Helper::set_bit_length(size_t l)

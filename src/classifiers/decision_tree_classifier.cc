@@ -1,20 +1,21 @@
 /*
  * Copyright 2013-2015 Raphael Bost
+ * Copyright 2016-2017 Pascal Berrang
  *
- * This file is part of ciphermed.
+ * This file is part of ciphermed-forests.
 
- *  ciphermed is free software: you can redistribute it and/or modify
+ *  ciphermed-forests is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
  * 
- *  ciphermed is distributed in the hope that it will be useful,
+ *  ciphermed-forests is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
  * 
  *  You should have received a copy of the GNU General Public License
- *  along with ciphermed.  If not, see <http://www.gnu.org/licenses/>. 2
+ *  along with ciphermed-forests.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
 
@@ -130,7 +131,8 @@ void Decision_tree_Classifier_Server_session::run_session()
         send_fhe_ctxt_to_socket(socket_, c_r);
 
 #ifdef BENCHMARK
-        cout << "Benchmark: " << GET_BENCHMARK_TIME << " ms" << endl;
+        cout << "Benchmark: " << GET_BENCHMARK_COMP_TIME << " ms (computation)" << endl;
+        cout << "Benchmark: " << GET_BENCHMARK_NET_TIME << " ms (network)" << endl;
         cout << IOBenchmark::byte_count() << " exchanged bytes" << endl;
         cout << IOBenchmark::interaction_count() << " interactions" << endl;
 #endif
@@ -231,16 +233,17 @@ void Decision_tree_Classifier_Client::run()
     t = new ScopedTimer("Client: Decrypt result");
     ea.decrypt(c_r, *fhe_sk_, res_bits);
 
-    long v = bitDecomp_inv(res_bits);
+    long v = bitSet_inv(res_bits);
     delete t;
 
 #ifdef BENCHMARK
-    cout << "Benchmark: " << GET_BENCHMARK_TIME << " ms" << endl;
+    cout << "Benchmark: " << GET_BENCHMARK_COMP_TIME << " ms (computation)" << endl;
+    cout << "Benchmark: " << GET_BENCHMARK_NET_TIME << " ms (network)" << endl;
     cout << (IOBenchmark::byte_count()/to_kB) << " exchanged kB" << endl;
     cout << IOBenchmark::interaction_count() << " interactions" << endl;
 #endif
 
-    cout << "Classification result: " << v << endl;
+    cout << "Classification result: " << v << " " << res_bits.size() << endl;
 }
 
 

@@ -1,20 +1,21 @@
 /*
  * Copyright 2013-2015 Raphael Bost
+ * Copyright 2016-2017 Pascal Berrang
  *
- * This file is part of ciphermed.
+ * This file is part of ciphermed-forests.
 
- *  ciphermed is free software: you can redistribute it and/or modify
+ *  ciphermed-forests is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
  * 
- *  ciphermed is distributed in the hope that it will be useful,
+ *  ciphermed-forests is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
  * 
  *  You should have received a copy of the GNU General Public License
- *  along with ciphermed.  If not, see <http://www.gnu.org/licenses/>. 2
+ *  along with ciphermed-forests.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
 
@@ -105,6 +106,16 @@ mpz_class
 Paillier::constMult(long m, const mpz_class &c) const
 {
     return mpz_class_powm(c, m, n2);
+}
+
+mpz_class
+Paillier::constXor(bool b, const mpz_class &c) const
+{
+    // compute g[b]^-1 mod N^2
+    mpz_class orig = c;
+    if(!b) return orig;
+    mpz_class res = mpz_class_invert(c, n2);
+    return (g*res)%n2;
 }
 
 mpz_class

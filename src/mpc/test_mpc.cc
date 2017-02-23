@@ -1,20 +1,21 @@
 /*
  * Copyright 2013-2015 Raphael Bost
+ * Copyright 2016-2017 Pascal Berrang
  *
- * This file is part of ciphermed.
+ * This file is part of ciphermed-forests.
 
- *  ciphermed is free software: you can redistribute it and/or modify
+ *  ciphermed-forests is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
  * 
- *  ciphermed is distributed in the hope that it will be useful,
+ *  ciphermed-forests is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
  * 
  *  You should have received a copy of the GNU General Public License
- *  along with ciphermed.  If not, see <http://www.gnu.org/licenses/>. 2
+ *  along with ciphermed-forests.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
 
@@ -512,10 +513,10 @@ static void test_change_ES()
         c_gm[i] = gm.encrypt(bits_query[i]);
     }
     
-    Change_ES_FHE_to_GM_slots_A switcher;
+    Change_ES_FHE_from_GM_slots_A switcher;
     vector<mpz_class> c_gm_blinded = switcher.blind(c_gm,gm,randstate, ea.size());
     
-    Ctxt c_blinded_fhe = Change_ES_FHE_to_GM_slots_B::decrypt_encrypt(c_gm_blinded,gm_priv,publicKey,ea);
+    Ctxt c_blinded_fhe = Change_ES_FHE_from_GM_slots_B::decrypt_encrypt(c_gm_blinded,gm_priv,publicKey,ea);
     
     Ctxt c_fhe = switcher.unblind(c_blinded_fhe,publicKey,ea);
     
@@ -561,15 +562,15 @@ int main(int argc, char **argv)
 //    test_lsic(l);
 //    test_compare(l);
     
-    for (int i = 0; i < 1; i++) {
-        test_gc(l);
-        cout << "\n\n";
-    }
+//    for (int i = 0; i < 1; i++) {
+//        test_gc(l);
+//        cout << "\n\n";
+//    }
     
     
 //    test_enc_compare(l,lambda);
 //    cout << "\n\n";
-//    test_rev_enc_compare(l,lambda);
+    test_rev_enc_compare(l,lambda);
 
 //    cout << "\n\n";
 //    test_enc_argmax(n,l,lambda,t);

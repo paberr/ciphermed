@@ -1,20 +1,21 @@
 /*
  * Copyright 2013-2015 Raphael Bost
+ * Copyright 2016-2017 Pascal Berrang
  *
- * This file is part of ciphermed.
+ * This file is part of ciphermed-forests.
 
- *  ciphermed is free software: you can redistribute it and/or modify
+ *  ciphermed-forests is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
  * 
- *  ciphermed is distributed in the hope that it will be useful,
+ *  ciphermed-forests is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
  * 
  *  You should have received a copy of the GNU General Public License
- *  along with ciphermed.  If not, see <http://www.gnu.org/licenses/>. 2
+ *  along with ciphermed-forests.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
 
@@ -60,7 +61,17 @@ test_paillier()
     mpz_class prod = p.constMult(m,ct0);
     //    mpz_class diff = p.constMult(-1, ct0);
     mpz_class diff = p.sub(ct0, ct1);
-    
+
+    mpz_class b0 = 0;
+    mpz_class b1 = 1;
+    mpz_class cb0 = p.encrypt(b0);
+    mpz_class cb1 = p.encrypt(b1);
+
+    mpz_class cb10 = p.constXor(true, cb0);
+    mpz_class cb00 = p.constXor(false, cb0);
+    mpz_class cb11 = p.constXor(true, cb1);
+    mpz_class cb01 = p.constXor(false, cb1);
+
     assert(pp.decrypt(ct0) == pt0);
     assert(pp.decrypt(ct1) == pt1);
     assert(pp.decrypt(sum) == (pt0+pt1)%n);
@@ -70,6 +81,12 @@ test_paillier()
     }
     assert( pp.decrypt(diff) == d);
     assert(pp.decrypt(prod) == (m*pt0)%n);
+
+    // xor
+    assert(pp.decrypt(cb00) == b0);
+    assert(pp.decrypt(cb01) == b1);
+    assert(pp.decrypt(cb10) == b1);
+    assert(pp.decrypt(cb11) == b0);
     
     cout << " passed" << endl;
 }
@@ -102,6 +119,16 @@ test_paillier_fast()
     mpz_class prod = p.constMult(m,ct0);
     //    mpz_class diff = p.constMult(-1, ct0);
     mpz_class diff = p.sub(ct0, ct1);
+
+    mpz_class b0 = 0;
+    mpz_class b1 = 1;
+    mpz_class cb0 = p.encrypt(b0);
+    mpz_class cb1 = p.encrypt(b1);
+
+    mpz_class cb10 = p.constXor(true, cb0);
+    mpz_class cb00 = p.constXor(false, cb0);
+    mpz_class cb11 = p.constXor(true, cb1);
+    mpz_class cb01 = p.constXor(false, cb1);
     
     assert(pp.decrypt(ct0) == pt0);
     assert(pp.decrypt(ct1) == pt1);
@@ -112,6 +139,12 @@ test_paillier_fast()
     }
     assert( pp.decrypt(diff) == d);
     assert(pp.decrypt(prod) == (m*pt0)%n);
+
+    // xor
+    assert(pp.decrypt(cb00) == b0);
+    assert(pp.decrypt(cb01) == b1);
+    assert(pp.decrypt(cb10) == b1);
+    assert(pp.decrypt(cb11) == b0);
     
     cout << " passed" << endl;
 }

@@ -5,11 +5,11 @@ SOURCES  := $(wildcard $(SRCDIR)/*.c)
 INCLUDES := $(wildcard $(SRCDIR)/*.h)
 OBJECTS  := $(SOURCES:$(SRCDIR)/%.c=$(OBJDIR)/justGarble/%.o)
 
-JG_CFLAGS= -g -lm -lrt -lpthread -maes -msse4 -lmsgpack -fgnu89-inline -fPIC
+JG_CFLAGS= -g -lm -lrt -lpthread -maes -msse4 -lmsgpackc -fgnu89-inline -fPIC
 
 all:    $(OBJDIR)/libjustGarble.so
 $(OBJDIR)/libjustGarble.so: $(OBJECTS)
-	$(CXX) -shared -o $@ $^ -lmsgpack
+	$(CXX) -shared -o $@ $^ -lmsgpackc
 
 $(OBJDIR)/libjustGarble.a: $(OBJECTS)
 	ar ruv $@ $(OBJECTS)
