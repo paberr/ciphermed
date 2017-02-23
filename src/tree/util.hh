@@ -1,20 +1,21 @@
 /*
  * Copyright 2013-2015 Raphael Bost
+ * Copyright 2016-2017 Pascal Berrang
  *
- * This file is part of ciphermed.
+ * This file is part of ciphermed-forests.
 
- *  ciphermed is free software: you can redistribute it and/or modify
+ *  ciphermed-forests is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
  * 
- *  ciphermed is distributed in the hope that it will be useful,
+ *  ciphermed-forests is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
  * 
  *  You should have received a copy of the GNU General Public License
- *  along with ciphermed.  If not, see <http://www.gnu.org/licenses/>. 2
+ *  along with ciphermed-forests.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
 
@@ -28,6 +29,9 @@ using namespace std;
 // takes the n first bits of x and put them in a vector 
 vector<long> bitDecomp(long x, size_t n);
 long bitDecomp_inv(const std::vector<long> &bits);
+vector<long> bitSet(long x, size_t n);
+long bitSet_inv(const vector<long> &bits);
+long max_bits(long num);
 
 // overload +,-,* operators for the vector class
 

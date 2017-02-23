@@ -77,7 +77,7 @@ Tree<long>* binaryRepTree(size_t level, size_t index_offset)
 
 ZZX encode_leaf(const Leaf<long> &leaf, const EncryptedArray &ea)
 {
-    vector<long> bits = bitDecomp(leaf.value(), ea.size());
+    vector<long> bits = bitSet(leaf.value(), ea.size());
     ZZX poly;
     ea.encode(poly, bits);
     

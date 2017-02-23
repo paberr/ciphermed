@@ -1,20 +1,21 @@
 /*
  * Copyright 2013-2015 Raphael Bost
+ * Copyright 2016-2017 Pascal Berrang
  *
- * This file is part of ciphermed.
+ * This file is part of ciphermed-forests.
 
- *  ciphermed is free software: you can redistribute it and/or modify
+ *  ciphermed-forests is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation, either version 3 of the License, or
  *  (at your option) any later version.
  * 
- *  ciphermed is distributed in the hope that it will be useful,
+ *  ciphermed-forests is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  *  GNU General Public License for more details.
  * 
  *  You should have received a copy of the GNU General Public License
- *  along with ciphermed.  If not, see <http://www.gnu.org/licenses/>. 2
+ *  along with ciphermed-forests.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
 
@@ -158,7 +159,7 @@ static void fun_with_fhe()
     PlaintextArray p2(ea);
     PlaintextArray p3(ea);
     
-    vector<long> values = bitDecomp(3,ea.size());
+    vector<long> values = bitSet(3,ea.size());
     cerr << "\n";
     for (size_t i = 0; i < values.size(); i++) {
         cerr << values[i] << ", ";
@@ -287,7 +288,7 @@ static void test_selector(size_t n_levels = 3, bool useShallowCircuit = true)
     delete timer;
     
     long query = rand() % ((1<<n_levels) - 1);
-    vector<long> bits_query = bitDecomp(query, n_levels);
+    vector<long> bits_query = bitSet(query, n_levels);
     
     timer = new ScopedTimer("Encode query");
     
@@ -333,7 +334,7 @@ static void test_selector(size_t n_levels = 3, bool useShallowCircuit = true)
     ea.decrypt(c_r, secretKey, res_bits);
     delete timer;
     
-    long res = bitDecomp_inv(res_bits);
+    long res = bitSet_inv(res_bits);
     cerr << "query=" << query << endl;
     cerr << "result=" << res << endl;
     
@@ -392,7 +393,7 @@ static void test_selector_tree(size_t n_levels = 3)
     delete timer;
     
     long query = rand() % ((1<<n_levels) - 1);
-    vector<long> bits_query = bitDecomp(query, n_levels);
+    vector<long> bits_query = bitSet(query, n_levels);
     
     timer = new ScopedTimer("Encode query");
     
@@ -422,7 +423,7 @@ static void test_selector_tree(size_t n_levels = 3)
     ea.decrypt(c_r, secretKey, res_bits);
     delete timer;
     
-    long res = bitDecomp_inv(res_bits);
+    long res = bitSet_inv(res_bits);
     cerr << "query=" << query << endl;
     cerr << "result=" << res << endl;
     

@@ -71,7 +71,8 @@ public:
 
     Multivariate_poly< vector<long> > to_polynomial_with_slots(size_t n) const
     {
-        return Multivariate_poly<vector<long>>(Term<vector<long> >(bitDecomp(value_,n)));
+        // use new bit encoding instead
+        return Multivariate_poly<vector<long>>(Term<vector<long> >(bitSet(value_,n)));
     }
 
 };
@@ -131,8 +132,8 @@ public:
 static Ctxt ctxt_neg(Ctxt &c, const EncryptedArray &ea)
 {
     Ctxt c_neg(c);
-    PlaintextArray pa(ea);
-    pa.encode(1);
+    NewPlaintextArray pa(ea);
+    encode(ea, pa, 1);
     ZZX one;
     ea.encode(one, pa);
     
