@@ -362,14 +362,14 @@ void multiple_exec_enc_comparison_owner_thread_call(shared_ptr<tcp::socket> sock
     exec_enc_comparison_owner(*socket,*owner_ptr,lambda,decrypt_result,n_threads);
 }
 
-void multiple_exec_enc_comparison_owner(tcp::socket &socket, vector<EncCompare_Owner*> &owners, unsigned int lambda, bool decrypt_result, unsigned int n_threads)
+void multiple_exec_enc_comparison_owner(tcp::socket &socket, vector<EncCompare_Owner*> &owners, unsigned int lambda, bool decrypt_result, unsigned int n_threads, unsigned int port)
 {
     // when doing multiple executions in parallel, the owner creates the sockets and the helper connects
     
     thread **comparison_threads = new thread* [owners.size()];
     
     tcp::endpoint endpoint = socket.local_endpoint(); // (tcp::v4(), PORT+1);
-    endpoint.port(PORT+1);
+    endpoint.port(port);
     
     tcp::acceptor acceptor(socket.get_io_service(), endpoint);
     
@@ -400,13 +400,13 @@ void multiple_exec_enc_comparison_helper_thread_call(shared_ptr<tcp::socket> soc
     exec_enc_comparison_helper(*socket,*helper_ptr,decrypt_result,n_threads);
 }
 
-void multiple_exec_enc_comparison_helper(tcp::socket &socket, vector<EncCompare_Helper*> &helpers, bool decrypt_result, unsigned int n_threads)
+void multiple_exec_enc_comparison_helper(tcp::socket &socket, vector<EncCompare_Helper*> &helpers, bool decrypt_result, unsigned int n_threads, unsigned int port)
 {
     thread **comparison_threads = new thread* [helpers.size()];
     
     tcp::resolver resolver(socket.get_io_service());
     tcp::endpoint endpoint = socket.remote_endpoint(); // (tcp::v4(), PORT+1);
-    endpoint.port(PORT+1);
+    endpoint.port(port);
     
     
     // wait for the owner to be ready
@@ -433,14 +433,14 @@ void multiple_exec_rev_enc_comparison_owner_thread_call(shared_ptr<tcp::socket> 
     exec_rev_enc_comparison_owner(*socket,*owner_ptr,lambda,decrypt_result,n_threads);
 }
 
-void multiple_exec_rev_enc_comparison_owner(tcp::socket &socket, vector<Rev_EncCompare_Owner*> &owners, unsigned int lambda, bool decrypt_result, unsigned int n_threads)
+void multiple_exec_rev_enc_comparison_owner(tcp::socket &socket, vector<Rev_EncCompare_Owner*> &owners, unsigned int lambda, bool decrypt_result, unsigned int n_threads, unsigned int port)
 {
     // when doing multiple executions in parallel, the owner creates the sockets and the helper connects
     
     thread **comparison_threads = new thread* [owners.size()];
     
     tcp::endpoint endpoint = socket.local_endpoint(); // (tcp::v4(), PORT+1);
-    endpoint.port(PORT+1);
+    endpoint.port(port);
     
     tcp::acceptor acceptor(socket.get_io_service(), endpoint);
     
@@ -471,13 +471,13 @@ void multiple_exec_rev_enc_comparison_helper_thread_call(shared_ptr<tcp::socket>
     exec_rev_enc_comparison_helper(*socket,*helper_ptr,decrypt_result,n_threads);
 }
 
-void multiple_exec_rev_enc_comparison_helper(tcp::socket &socket, vector<Rev_EncCompare_Helper*> &helpers, bool decrypt_result, unsigned int n_threads)
+void multiple_exec_rev_enc_comparison_helper(tcp::socket &socket, vector<Rev_EncCompare_Helper*> &helpers, bool decrypt_result, unsigned int n_threads, unsigned int port)
 {
     thread **comparison_threads = new thread* [helpers.size()];
     
     tcp::resolver resolver(socket.get_io_service());
     tcp::endpoint endpoint = socket.remote_endpoint(); // (tcp::v4(), PORT+1);
-    endpoint.port(PORT+1);
+    endpoint.port(port);
     
     
     // wait for the owner to be ready
@@ -566,7 +566,7 @@ void exec_linear_enc_argmax(tcp::socket &socket, Linear_EncArgmax_Helper &helper
     sendIntToSocket(socket, permuted_argmax);
 }
 
-void exec_tree_enc_argmax(tcp::socket &socket, Tree_EncArgmax_Owner &owner, function<Comparison_protocol_A*()> comparator_creator, unsigned int lambda, unsigned int n_threads)
+void exec_tree_enc_argmax(tcp::socket &socket, Tree_EncArgmax_Owner &owner, function<Comparison_protocol_A*()> comparator_creator, unsigned int lambda, unsigned int n_threads, unsigned int port)
 {
     size_t k = owner.elements_number();
     
@@ -574,7 +574,7 @@ void exec_tree_enc_argmax(tcp::socket &socket, Tree_EncArgmax_Owner &owner, func
         vector<Rev_EncCompare_Owner*> rev_enc_owners = owner.create_current_round_rev_enc_compare_owners(comparator_creator);
 
         unsigned int thread_per_job = ceilf(((float)n_threads)/rev_enc_owners.size());
-        multiple_exec_rev_enc_comparison_owner(socket,rev_enc_owners,lambda,true,thread_per_job);
+        multiple_exec_rev_enc_comparison_owner(socket,rev_enc_owners,lambda,true,thread_per_job, port);
         
         // cleanup
         for (size_t i = 0; i < rev_enc_owners.size(); i++) {
@@ -602,7 +602,7 @@ void exec_tree_enc_argmax(tcp::socket &socket, Tree_EncArgmax_Owner &owner, func
     owner.unpermuteResult(permuted_argmax.get_ui());
 }
 
-void exec_tree_enc_argmax(tcp::socket &socket, Tree_EncArgmax_Helper &helper, function<Comparison_protocol_B*()> comparator_creator, unsigned int n_threads)
+void exec_tree_enc_argmax(tcp::socket &socket, Tree_EncArgmax_Helper &helper, function<Comparison_protocol_B*()> comparator_creator, unsigned int n_threads, unsigned int port)
 {
     size_t k = helper.elements_number();
     
@@ -611,7 +611,7 @@ void exec_tree_enc_argmax(tcp::socket &socket, Tree_EncArgmax_Helper &helper, fu
         
         unsigned int thread_per_job = ceilf(((float)n_threads)/rev_enc_helpers.size());
        
-        multiple_exec_rev_enc_comparison_helper(socket,rev_enc_helpers,true,thread_per_job);
+        multiple_exec_rev_enc_comparison_helper(socket,rev_enc_helpers,true,thread_per_job, port);
         
         // get result and cleanup
         vector<bool> results (rev_enc_helpers.size());

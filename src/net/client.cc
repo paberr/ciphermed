@@ -416,7 +416,7 @@ vector<bool> Client::multiple_enc_comparison(const vector<mpz_class> &a, const v
     }
 
     unsigned int thread_per_job = ceilf(((float)n_threads_)/n);
-    multiple_exec_enc_comparison_owner(socket_, owners, lambda_, true, thread_per_job);
+    multiple_exec_enc_comparison_owner(socket_, owners, lambda_, true, thread_per_job, port_+1);
     
     vector<bool> results(n);
     
@@ -438,7 +438,7 @@ void Client::multiple_help_enc_comparison(const size_t n, const size_t &l, COMPA
     }
    
     unsigned int thread_per_job = ceilf(((float)n_threads_)/n);
-    multiple_exec_enc_comparison_helper(socket_, helpers, true, thread_per_job);
+    multiple_exec_enc_comparison_helper(socket_, helpers, true, thread_per_job, port_+1);
     
     for (size_t i = 0; i < n; i++) {
         delete helpers[i];
@@ -457,7 +457,7 @@ void Client::multiple_rev_enc_comparison(const vector<mpz_class> &a, const vecto
     }
     
     unsigned int thread_per_job = ceilf(((float)n_threads_)/n);
-multiple_exec_rev_enc_comparison_owner(socket_, owners, lambda_, true, thread_per_job);
+    multiple_exec_rev_enc_comparison_owner(socket_, owners, lambda_, true, thread_per_job, port_+1);
     
     
     for (size_t i = 0; i < n; i++) {
@@ -477,7 +477,7 @@ vector<bool> Client::multiple_help_rev_enc_comparison(const size_t n, const size
     }
     
     unsigned int thread_per_job = ceilf(((float)n_threads_)/n);
-    multiple_exec_rev_enc_comparison_helper(socket_, helpers, true, thread_per_job);
+    multiple_exec_rev_enc_comparison_helper(socket_, helpers, true, thread_per_job, port_+1);
     
     vector<bool> results(n);
     for (size_t i = 0; i < n; i++) {
@@ -525,7 +525,7 @@ size_t Client::run_tree_enc_argmax(Tree_EncArgmax_Owner &owner, COMPARISON_PROTO
         comparator_creator = [this,nbits](){ return new GC_Compare_A(0,nbits,*server_gm_, rand_state_); };
     }
 
-    exec_tree_enc_argmax(socket_,owner, comparator_creator, lambda_, n_threads_);
+    exec_tree_enc_argmax(socket_,owner, comparator_creator, lambda_, n_threads_, port_+1);
     
     return owner.output();
 }
@@ -671,7 +671,7 @@ void Client::run_tree_enc_argmax(Tree_EncArgmax_Helper &helper, COMPARISON_PROTO
     }else if (comparison_prot == GC_PROTOCOL) {
         comparator_creator = [this,nbits](){ return new GC_Compare_B(0,nbits,*gm_, rand_state_); };
     }
-    exec_tree_enc_argmax(socket_, helper, comparator_creator, n_threads_);
+    exec_tree_enc_argmax(socket_, helper, comparator_creator, n_threads_, port_+1);
 }
 
 void Client::move_paillier_to_server(vector<mpz_class> c_p) {

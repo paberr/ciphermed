@@ -445,7 +445,7 @@ vector<bool> Server_session::multiple_enc_comparison(const vector<mpz_class> &a,
     }
     
     unsigned int thread_per_job = ceilf(((float)server_->threads_per_session())/n);
-    multiple_exec_enc_comparison_owner(socket_, owners, server_->lambda(), true, thread_per_job);
+    multiple_exec_enc_comparison_owner(socket_, owners, server_->lambda(), true, thread_per_job, server_->port()+1);
     
     vector<bool> results(n);
     
@@ -468,7 +468,7 @@ void Server_session::multiple_help_enc_comparison(const size_t n, const size_t &
     }
     
     unsigned int thread_per_job = ceilf(((float)server_->threads_per_session())/n);
-    multiple_exec_enc_comparison_helper(socket_, helpers, true, thread_per_job);
+    multiple_exec_enc_comparison_helper(socket_, helpers, true, thread_per_job, server_->port()+1);
     
     for (size_t i = 0; i < n; i++) {
         delete helpers[i];
@@ -488,7 +488,7 @@ void Server_session::multiple_rev_enc_comparison(const vector<mpz_class> &a, con
     }
     
     unsigned int thread_per_job = ceilf(((float)server_->threads_per_session())/n);
-    multiple_exec_rev_enc_comparison_owner(socket_, owners, server_->lambda(), true, thread_per_job);
+    multiple_exec_rev_enc_comparison_owner(socket_, owners, server_->lambda(), true, thread_per_job, server_->port()+1);
     
     
     for (size_t i = 0; i < n; i++) {
@@ -508,7 +508,7 @@ vector<bool> Server_session::multiple_help_rev_enc_comparison(const size_t n, co
     }
     
     unsigned int thread_per_job = ceilf(((float)server_->threads_per_session())/n);
-    multiple_exec_rev_enc_comparison_helper(socket_, helpers, true, thread_per_job);
+    multiple_exec_rev_enc_comparison_helper(socket_, helpers, true, thread_per_job, server_->port()+1);
     
     vector<bool> results(n);
     for (size_t i = 0; i < n; i++) {
@@ -546,7 +546,7 @@ void Server_session::run_tree_enc_argmax(Tree_EncArgmax_Helper &helper, COMPARIS
     }else if (comparison_prot == GC_PROTOCOL) {
         comparator_creator = [this,nbits](){ return new GC_Compare_B(0,nbits,server_->gm(), rand_state_); };
     }
-    exec_tree_enc_argmax(socket_, helper, comparator_creator, server_->threads_per_session());
+    exec_tree_enc_argmax(socket_, helper, comparator_creator, server_->threads_per_session(), server_->port()+1);
 }
 
 Ctxt Server_session::change_encryption_scheme(const vector<mpz_class> &c_gm)
@@ -697,7 +697,7 @@ size_t Server_session::run_tree_enc_argmax(Tree_EncArgmax_Owner &owner, COMPARIS
         comparator_creator = [this,nbits](){ return new GC_Compare_A(0,nbits,*client_gm_, rand_state_); };
     }
 
-    exec_tree_enc_argmax(socket_,owner, comparator_creator, 100, server_->threads_per_session());
+    exec_tree_enc_argmax(socket_,owner, comparator_creator, 100, server_->threads_per_session(), server_->port()+1);
 
     return owner.output();
 }
