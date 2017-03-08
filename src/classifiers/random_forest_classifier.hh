@@ -42,7 +42,7 @@ using namespace std;
 
 class Random_forest_Classifier_Server : public Server {
 public:
-    Random_forest_Classifier_Server(gmp_randstate_t state, unsigned int keysize, const vector<Node<long>* > &model, unsigned int n_trees, unsigned int n_classes, vector<unsigned int> n_variables, const vector<vector<pair <long,long> > > &criteria, bool majority_vote);
+    Random_forest_Classifier_Server(gmp_randstate_t state, unsigned int keysize, const vector<Node<long>* > &model, unsigned int n_trees, unsigned int n_classes, vector<unsigned int> n_variables, const vector<vector<pair <long,long> > > &criteria, bool plurality_vote);
   
     Server_session* create_new_server_session(tcp::socket &socket);
 
@@ -55,7 +55,7 @@ public:
     unsigned int n_variables(const int tree) { return n_variables_[tree]; }
     unsigned int n_trees() const { return n_trees_; }
     unsigned int n_classes() const { return n_classes_; }
-    bool majority_vote() const { return majority_vote_; }
+    bool majority_vote() const { return plurality_vote_; }
     vector<vector<pair <long,long> >> criteria() const { return criteria_; }
 
 protected:
@@ -63,7 +63,7 @@ protected:
     const vector<unsigned int> n_variables_;
     const unsigned int n_trees_;
     const unsigned int n_classes_;
-    const bool majority_vote_;
+    const bool plurality_vote_;
     vector<vector<pair <long,long> > > criteria_;
 };
 
@@ -82,15 +82,15 @@ protected:
 
 class Random_forest_Classifier_Client : public Client{
 public:
-    Random_forest_Classifier_Client(boost::asio::io_service& io_service, gmp_randstate_t state, unsigned int keysize, vector<long> &query, vector<unsigned int> n_nodes, unsigned int n_trees,
-                                    unsigned int n_classes, bool majority_vote);
+    Random_forest_Classifier_Client(boost::asio::io_service& io_service, gmp_randstate_t state, unsigned int keysize, vector<long> &query, unsigned int n_nodes, unsigned int n_trees,
+                                    unsigned int n_classes, bool plurality_vote);
     
     void run();
     
 protected:
     vector<long> query_;
-    vector<unsigned int> n_nodes_;
+    unsigned int n_nodes_;
     const unsigned int n_classes_;
     const unsigned int n_trees_;
-    const bool majority_vote_;
+    const bool plurality_vote_;
 };

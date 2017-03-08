@@ -18,6 +18,7 @@
  *
  */
 
+#include <algorithm>
 #include <classifiers/random_forest_classifier.hh>
 
 #include <protobuf/protobuf_conversion.hh>
@@ -31,8 +32,8 @@
 
 #include <util/util.hh>
 
-Random_forest_Classifier_Server::Random_forest_Classifier_Server(gmp_randstate_t state, unsigned int keysize, const vector<Node<long>* > &model, unsigned int n_trees, unsigned int n_classes, vector<unsigned int> n_variables, const vector<vector<pair <long,long> > > &criteria, bool majority_vote)
-: Server(state, Random_forest_Classifier_Server::key_deps_descriptor(), keysize, 0), n_variables_(n_variables), criteria_(criteria), n_trees_(n_trees), n_classes_(n_classes), majority_vote_(majority_vote)
+Random_forest_Classifier_Server::Random_forest_Classifier_Server(gmp_randstate_t state, unsigned int keysize, const vector<Node<long>* > &model, unsigned int n_trees, unsigned int n_classes, vector<unsigned int> n_variables, const vector<vector<pair <long,long> > > &criteria, bool plurality_vote)
+: Server(state, Random_forest_Classifier_Server::key_deps_descriptor(), keysize, 0), n_variables_(n_variables), criteria_(criteria), n_trees_(n_trees), n_classes_(n_classes), plurality_vote_(plurality_vote)
 {
     EncryptedArray ea(*fhe_context_, fhe_G_);
 
@@ -83,16 +84,29 @@ void Random_forest_Classifier_Server_session::run_session()
         }
         delete t;
 
+
         // compare all values
         vector<vector<mpz_class> > c_b_gm(forest_server_->n_trees());
-        
-        t = new ScopedTimer("Server: Compare");
+
+        // we would like to shuffle comparisons here
+        vector<pair <size_t, size_t> > indices;
         for(size_t tj = 0; tj < c_b_gm.size(); ++tj) {
+            // initialize vector here
             c_b_gm[tj] = vector<mpz_class>(forest_server_->n_variables(tj));
             for (size_t i = 0; i < c_b_gm[tj].size(); ++i) {
-                mpz_class c_treshold = client_paillier_->encrypt(get<1>(criteria[tj][i]));
-                c_b_gm[tj][i] = enc_comparison_enc_result(node_values[tj][i], c_treshold, 128, GC_PROTOCOL);
+                pair<size_t, size_t> p = make_pair(tj, i);
+                indices.push_back(p);
             }
+        }
+        random_shuffle ( indices.begin(), indices.end() );
+
+        // now run shuffled comparisons
+        t = new ScopedTimer("Server: Compare");
+        for (vector<pair <size_t, size_t> >::iterator it=indices.begin(); it!=indices.end(); ++it) {
+            size_t tj = get<0>(*it);
+            size_t i = get<1>(*it);
+            mpz_class c_treshold = client_paillier_->encrypt(get<1>(criteria[tj][i]));
+            c_b_gm[tj][i] = enc_comparison_enc_result(node_values[tj][i], c_treshold, 128, GC_PROTOCOL);
         }
         delete t;
 
@@ -178,8 +192,8 @@ void Random_forest_Classifier_Server_session::run_session()
     delete this;
 }
 
-Random_forest_Classifier_Client::Random_forest_Classifier_Client(boost::asio::io_service& io_service, gmp_randstate_t state, unsigned int keysize, vector<long> &query, vector<unsigned int> n_nodes, unsigned int n_trees, unsigned int n_classes, bool majority_vote)
-: Client(io_service,state,Random_forest_Classifier_Server::key_deps_descriptor(),keysize,100), query_(query), n_nodes_(n_nodes), n_trees_(n_trees), n_classes_(n_classes), majority_vote_(majority_vote)
+Random_forest_Classifier_Client::Random_forest_Classifier_Client(boost::asio::io_service& io_service, gmp_randstate_t state, unsigned int keysize, vector<long> &query, unsigned int n_nodes, unsigned int n_trees, unsigned int n_classes, bool plurality_vote)
+: Client(io_service,state,Random_forest_Classifier_Server::key_deps_descriptor(),keysize,100), query_(query), n_nodes_(n_nodes), n_trees_(n_trees), n_classes_(n_classes), plurality_vote_(plurality_vote)
 {
     
 }
@@ -211,26 +225,22 @@ void Random_forest_Classifier_Client::run()
     // the server computes the criteria for each node and needs our help
     
     t = new ScopedTimer("Client: Compute criteria");
-    for (unsigned int tj = 0; tj < n_trees_; ++tj) {
-        for (unsigned int i = 0; i < n_nodes_[tj]; ++i) {
-            // for now, do it over 64 bits
-            help_enc_comparison_enc_result(128, GC_PROTOCOL);
-        }
+    for (unsigned int tj = 0; tj < n_nodes_; ++tj) {
+        // for now, do it over 64 bits
+        help_enc_comparison_enc_result(128, GC_PROTOCOL);
     }
     delete t;
 
     t = new ScopedTimer("Client: Change encryption scheme");
     // now he wants the booleans encrypted under FHE
-    for (unsigned int tj = 0; tj < n_trees_; ++tj) {
-        for (unsigned int i = 0; i < n_nodes_[tj]; i++) {
-            run_change_encryption_scheme_slots_helper();
-        }
+    for (unsigned int tj = 0; tj < n_nodes_; ++tj) {
+        run_change_encryption_scheme_slots_helper();
     }
     delete t;
 
     long v = 0;
 
-    if (majority_vote_) {
+    if (plurality_vote_) {
         cout << "Performing majority vote protocol." << endl;
 
         t = new ScopedTimer("Client: Change encryption scheme back");

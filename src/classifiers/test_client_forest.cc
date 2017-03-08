@@ -79,19 +79,17 @@ static void test_tree_classifier_client(const string &hostname)
 
 
         vector<long> query;
-        vector<unsigned int> n_nodes(3);
+        unsigned int n_nodes = 20;
+        unsigned int n_trees = 3;
         
 //       query = gen_nursery_query();
 //       n_nodes = 4;
         
         query = gen_ecg_query();
-        n_nodes[0] = 6;
-        n_nodes[1] = 6;
-        n_nodes[2] = 8;
         
         
 //        vector<long> query_bits = bitDecomp(query, N_LEVELS);
-        Random_forest_Classifier_Client client(io_service, randstate,1248,query,n_nodes,n_nodes.size(), 6, true);
+        Random_forest_Classifier_Client client(io_service, randstate,1248,query,n_nodes,n_trees, 6, true);
         
         client.connect(io_service, hostname);
         
